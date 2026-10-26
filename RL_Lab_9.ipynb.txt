@@ -1,0 +1,244 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyN9Aj2G795QCVpZu/67oxjE",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/2403A51L03/Reinforcement_Learning/blob/main/RL_Lab_9.ipynb\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Asignment-1"
+      ],
+      "metadata": {
+        "id": "WQ10nYypT2GC"
+      }
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 3,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "6M8t0uwLT0FA",
+        "outputId": "c15b8b5d-e64f-48eb-e39f-b17e6c55d3e6"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "State Values:\n",
+            "V(S0) = 77.47\n",
+            "V(S1) = 96.87\n",
+            "\n",
+            "Action Values:\n",
+            "Q(S0, Down) = 86.18\n",
+            "Q(S0, Right) = -1.00\n",
+            "Q(S1, Right) = 100.00\n",
+            "Q(S1, Up) = 68.72\n",
+            "\n",
+            "Verification:\n",
+            "Calculated V(S0) = 77.47\n",
+            "Calculated V(S1) = 96.87\n"
+          ]
+        }
+      ],
+      "source": [
+        "gamma = 0.9\n",
+        "\n",
+        "# Solve the simultaneous Bellman equations algebraically\n",
+        "V0 = 71.819 / 0.9271\n",
+        "V1 = 89.9 + 0.09 * V0\n",
+        "\n",
+        "# Calculate action values\n",
+        "Q0_down = -1 + gamma * V1\n",
+        "Q0_right = -1\n",
+        "Q1_right = 100\n",
+        "Q1_up = -1 + gamma * V0\n",
+        "\n",
+        "# Verify state values using the policy probabilities\n",
+        "check_V0 = 0.9 * Q0_down + 0.1 * Q0_right\n",
+        "check_V1 = 0.9 * Q1_right + 0.1 * Q1_up\n",
+        "\n",
+        "print(\"State Values:\")\n",
+        "print(f\"V(S0) = {V0:.2f}\")\n",
+        "print(f\"V(S1) = {V1:.2f}\")\n",
+        "\n",
+        "print(\"\\nAction Values:\")\n",
+        "print(f\"Q(S0, Down) = {Q0_down:.2f}\")\n",
+        "print(f\"Q(S0, Right) = {Q0_right:.2f}\")\n",
+        "print(f\"Q(S1, Right) = {Q1_right:.2f}\")\n",
+        "print(f\"Q(S1, Up) = {Q1_up:.2f}\")\n",
+        "\n",
+        "print(\"\\nVerification:\")\n",
+        "print(f\"Calculated V(S0) = {check_V0:.2f}\")\n",
+        "print(f\"Calculated V(S1) = {check_V1:.2f}\")\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Assignment-2"
+      ],
+      "metadata": {
+        "id": "69ycn0nkT39o"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "gamma = 0.9\n",
+        "theta = 0.000001\n",
+        "\n",
+        "# Deterministic policy\n",
+        "policy = {\n",
+        "    \"S0\": \"Down\",\n",
+        "    \"S1\": \"Right\"\n",
+        "}\n",
+        "\n",
+        "# Transition model: (next state, probability, reward)\n",
+        "transitions = {\n",
+        "    (\"S0\", \"Down\"): [\n",
+        "        (\"Wall\", 0.1, -1),\n",
+        "        (\"S1\", 0.9, -1)\n",
+        "    ],\n",
+        "    (\"S0\", \"Right\"): [\n",
+        "        (\"Wall\", 1.0, -1)\n",
+        "    ],\n",
+        "    (\"S1\", \"Right\"): [\n",
+        "        (\"G\", 0.9, 100),\n",
+        "        (\"S0\", 0.1, -1)\n",
+        "    ],\n",
+        "    (\"S1\", \"Up\"): [\n",
+        "        (\"S0\", 1.0, -1)\n",
+        "    ]\n",
+        "}\n",
+        "\n",
+        "# Initialize state values\n",
+        "V = {\n",
+        "    \"S0\": 0.0,\n",
+        "    \"S1\": 0.0\n",
+        "}\n",
+        "\n",
+        "iterations = 0\n",
+        "\n",
+        "# Iterative policy evaluation\n",
+        "while True:\n",
+        "    old = V.copy()\n",
+        "\n",
+        "    new_V = {}\n",
+        "\n",
+        "    for state in [\"S0\", \"S1\"]:\n",
+        "        action = policy[state]\n",
+        "        value = 0.0\n",
+        "\n",
+        "        for next_state, prob, reward in transitions[(state, action)]:\n",
+        "            value += prob * (\n",
+        "                reward + gamma * old.get(next_state, 0.0)\n",
+        "            )\n",
+        "\n",
+        "        new_V[state] = value\n",
+        "\n",
+        "    delta = max(\n",
+        "        abs(new_V[\"S0\"] - old[\"S0\"]),\n",
+        "        abs(new_V[\"S1\"] - old[\"S1\"])\n",
+        "    )\n",
+        "\n",
+        "    V = new_V\n",
+        "    iterations += 1\n",
+        "\n",
+        "    if delta < theta:\n",
+        "        break\n",
+        "\n",
+        "# Calculate action values after convergence\n",
+        "Q = {}\n",
+        "\n",
+        "for (state, action), outcomes in transitions.items():\n",
+        "    value = 0.0\n",
+        "\n",
+        "    for next_state, prob, reward in outcomes:\n",
+        "        value += prob * (\n",
+        "            reward + gamma * V.get(next_state, 0.0)\n",
+        "        )\n",
+        "\n",
+        "    Q[(state, action)] = value\n",
+        "\n",
+        "# Display results\n",
+        "print(\"Number of iterations:\", iterations)\n",
+        "\n",
+        "print(\"\\nState Values:\")\n",
+        "print(f\"V(S0) = {V['S0']:.6f}\")\n",
+        "print(f\"V(S1) = {V['S1']:.6f}\")\n",
+        "\n",
+        "print(\"\\nAction Values:\")\n",
+        "print(f\"Q(S0, Down) = {Q[('S0', 'Down')]:.6f}\")\n",
+        "print(f\"Q(S0, Right) = {Q[('S0', 'Right')]:.6f}\")\n",
+        "print(f\"Q(S1, Right) = {Q[('S1', 'Right')]:.6f}\")\n",
+        "print(f\"Q(S1, Up) = {Q[('S1', 'Up')]:.6f}\")\n",
+        "\n",
+        "print(\"\\nPolicy Consistency Checks:\")\n",
+        "print(\"V(S0) =\", f\"{V['S0']:.6f}\")\n",
+        "print(\"Q(S0, Down) =\", f\"{Q[('S0', 'Down')]:.6f}\")\n",
+        "print(\"V(S1) =\", f\"{V['S1']:.6f}\")\n",
+        "print(\"Q(S1, Right) =\", f\"{Q[('S1', 'Right')]:.6f}\")\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "XHa6LywRT6dc",
+        "outputId": "1132bfce-3492-4d09-e867-1fbdcc866ea1"
+      },
+      "execution_count": 4,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Number of iterations: 15\n",
+            "\n",
+            "State Values:\n",
+            "V(S0) = 77.466292\n",
+            "V(S1) = 96.871966\n",
+            "\n",
+            "Action Values:\n",
+            "Q(S0, Down) = 77.466293\n",
+            "Q(S0, Right) = -1.000000\n",
+            "Q(S1, Right) = 96.871966\n",
+            "Q(S1, Up) = 68.719663\n",
+            "\n",
+            "Policy Consistency Checks:\n",
+            "V(S0) = 77.466292\n",
+            "Q(S0, Down) = 77.466293\n",
+            "V(S1) = 96.871966\n",
+            "Q(S1, Right) = 96.871966\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
